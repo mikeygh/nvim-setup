@@ -20,6 +20,11 @@ require("lazy").setup({
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
     -- LazyVim extras (must come before user plugins)
     { import = "lazyvim.plugins.extras.lang.go" },
+    -- Code reading extras
+    { import = "lazyvim.plugins.extras.editor.illuminate" },
+    { import = "lazyvim.plugins.extras.editor.aerial" },
+    { import = "lazyvim.plugins.extras.ui.treesitter-context" },
+    { import = "lazyvim.plugins.extras.ui.indent-blankline" },
     -- import/override with your plugins
     { import = "plugins" },
   },
