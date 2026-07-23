@@ -3,13 +3,11 @@ return {
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = "onedark",
+      colorscheme = "github_dark_default",
     },
   },
   {
-    "navarasu/onedark.nvim",
-    opts = {
-      style = "darker",
-    },
+    "projekt0n/github-nvim-theme",
+    opts = {},
   },
 }
