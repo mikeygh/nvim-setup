@@ -22,12 +22,30 @@ return {
             gopls = {
               analyses = {
                 -- Keep all Go extra defaults plus add:
-                shadow = true,         -- detect shadowed variables
-                fieldalignment = true,  -- detect struct layout inefficiencies
-                lostcancel = true,      -- detect lost cancel contexts
-                undeclaredname = true,  -- detect undeclared names
+                shadow = true, -- detect shadowed variables
+                fieldalignment = true, -- detect struct layout inefficiencies
+                lostcancel = true, -- detect lost cancel contexts
+                undeclaredname = true, -- detect undeclared names
               },
-              importsLocal = "pingidentity",
+              codelenses = {
+                gc_details = false,
+                generate = true,
+                regenerate_cgo = true,
+                run_govulncheck = true,
+                test = true,
+                tidy = true,
+                upgrade_dependency = true,
+                vendor = true,
+              },
+              hints = {
+                assignVariableTypes = true,
+                compositeLiteralFields = true,
+                compositeLiteralTypes = true,
+                constantValues = true,
+                functionTypeParameters = true,
+                parameterNames = true,
+                rangeVariableTypes = true,
+              },
               vulncheck = "Imports",
             },
           },
@@ -66,20 +84,6 @@ return {
   -- test toggling, gotests integration, formatting.
   {
     "crispgm/nvim-go",
-    keys = {
-      { "<leader>Gi", function() require("go.iferr").add_iferr() end, desc = "Go If Err" },
-      { "<leader>Ga", function()
-        vim.ui.input({ prompt = "Package: " }, function(pkg)
-          if pkg and pkg ~= "" then
-            require("go.import").import(pkg)
-          end
-        end)
-      end, desc = "Go Add Import" },
-      { "<leader>Gm", function() require("go.struct_tag").add_tags() end, desc = "Go Add Tags" },
-      { "<leader>Gc", function() require("go.struct_tag").clear_tags() end, desc = "Go Clear Tags" },
-      { "<leader>Gg", function() require("go.test").test_open() end, desc = "Go Toggle Test File" },
-      { "<leader>Gf", function() require("go.format").format() end, desc = "Go Format" },
-    },
     dependencies = {
       "nvim-lua/plenary.nvim",
     },
@@ -102,13 +106,10 @@ return {
     },
     opts = function(_, opts)
       opts.adapters = opts.adapters or {}
-      opts.adapters["neotest-golang"] = vim.tbl_deep_extend("force",
-        opts.adapters["neotest-golang"] or {},
-        {
-          go_test_args = { "-v", "-race", "-count=1", "-timeout=60s" },
-          dap_go_enabled = true,
-        }
-      )
+      opts.adapters["neotest-golang"] = vim.tbl_deep_extend("force", opts.adapters["neotest-golang"] or {}, {
+        go_test_args = { "-v", "-race", "-count=1", "-timeout=60s" },
+        dap_go_enabled = true,
+      })
     end,
     -- stylua: ignore
     keys = {
@@ -156,7 +157,7 @@ return {
     end,
   },
 
-  -- ─── 7. DAP UI (optional, but nice) ──────────────────────────
+  -- ─── 7. DAP UI ──────────────────────────────────────────────
   {
     "rcarriga/nvim-dap-ui",
     dependencies = {
@@ -164,53 +165,28 @@ return {
       "nvim-neotest/nvim-nio",
     },
     keys = {
-      { "<leader>du", function() require("dapui").toggle() end, desc = "Toggle DAP UI" },
-    },
-    opts = {},
-  },
-
-  -- ─── 8. Go workflow keymaps (build / vet / generate) ─────────
-  -- Note: <leader>g is reserved for Git by LazyVim, so <leader>G = Go
-  {
-    "LazyVim/LazyVim",
-    -- stylua: ignore
-    keys = {
-      -- Generate test for function at cursor (gotests)
-      { "<leader>Gt", function()
-        require("go.gotests").add_test()
-      end, desc = "Go Generate Test" },
-
-      -- Build current package
-      { "<leader>Gb", function()
-        vim.cmd("!go build ./...")
-      end, desc = "Go Build" },
-
-      -- Vet current package
-      { "<leader>Gv", function()
-        vim.cmd("!go vet ./...")
-      end, desc = "Go Vet" },
-
-      -- Tidy go.mod
-      { "<leader>Gz", function()
-        vim.cmd("!go mod tidy")
-      end, desc = "Go Mod Tidy" },
-
-      -- Generate from go:generate directives
-      { "<leader>Gn", function()
-        vim.cmd("!go generate ./...")
-      end, desc = "Go Generate" },
-    },
-  },
-
-  -- ─── 9. Which-key: group descriptions ─────────────────────────
-  {
-    "folke/which-key.nvim",
-    optional = true,
-    opts = {
-      spec = {
-        ["<leader>G"] = { name = "+go" },
-        ["<leader>d"] = { name = "+debug" },
+      {
+        "<leader>du",
+        function()
+          require("dapui").toggle()
+        end,
+        desc = "Toggle DAP UI",
       },
     },
+    config = function(_, opts)
+      local dap = require("dap")
+      local dapui = require("dapui")
+      dapui.setup(opts)
+      -- Auto-open/close DAP UI when debugging starts/stops
+      dap.listeners.after.event_initialized["dapui_config"] = function()
+        dapui.open()
+      end
+      dap.listeners.before.event_terminated["dapui_config"] = function()
+        dapui.close()
+      end
+      dap.listeners.before.event_exited["dapui_config"] = function()
+        dapui.close()
+      end
+    end,
   },
 }
